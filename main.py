@@ -55,7 +55,7 @@ def create_main_keyboard(authorized=False):
     else:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="💧 Claim 0.0001–0.01 XRP", callback_data="claim")],
-            [InlineKeyboardButton(text="🏆 Try to Win 1 XRP", callback_data="lottery")],
+            #[InlineKeyboardButton(text="🏆 Try to Win 1 XRP", callback_data="lottery")],
             [InlineKeyboardButton(text="⏳ Next Claim in: --:--", callback_data="timer")],
             [InlineKeyboardButton(text="👥 Referrals & Your Link", callback_data="referrals")]
         ])
