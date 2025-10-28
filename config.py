@@ -15,7 +15,7 @@ JSON_RPC_URL = "https://s1.ripple.com:51234"
 
 MIN_REWARD = 0.0001
 MAX_REWARD = 0.01
-CURRENT_REWARD = 0.01  # Fixed for now
+CURRENT_REWARD = 0.001  # Fixed for now
 
 # Lottery Settings
 LOTTERY_MIN = 0.001
