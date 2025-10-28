@@ -31,8 +31,10 @@ LOTTERY_COOLDOWN = 3600  # 1 hour in seconds
 DATABASE_NAME = "snake_bot.db"
 
 # Channel Settings
-CHANNEL_USERNAME = "shakertest"
-CHANNEL_URL = "https://t.me/shakertest"
+CHANNEL_USERNAME = "Snake666wrb"
+CHANNEL_URL = "https://t.me/Snake666wrb"
+CHANNEL_USERNAME_2 = "shakertest"
+CHANNEL_URL_2 = "https://t.me/shakertest"
 CHECK_SUBSCRIPTION = True
 
 # Messages

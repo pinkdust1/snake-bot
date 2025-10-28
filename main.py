@@ -55,7 +55,7 @@ def create_main_keyboard(authorized=False):
     else:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="💧 Claim 0.0001–0.01 XRP", callback_data="claim")],
-            #[InlineKeyboardButton(text="🏆 Try to Win 1 XRP", callback_data="lottery")],
+            [InlineKeyboardButton(text="🏆 Try to Win 1 XRP", callback_data="lottery")],
             [InlineKeyboardButton(text="⏳ Next Claim in: --:--", callback_data="timer")],
             [InlineKeyboardButton(text="👥 Referrals & Your Link", callback_data="referrals")]
         ])
@@ -292,26 +292,38 @@ def generate_captcha():
     }
 
 async def check_subscription(user_id):
-    """Check if user is subscribed to the channel"""
+    """Check if user is subscribed to all required channels"""
     if not config.CHECK_SUBSCRIPTION:
         print(f"Subscription check disabled for user {user_id}")
         return True
     
-    try:
-        print(f"Checking subscription for user {user_id} in @{config.CHANNEL_USERNAME}")
-        member = await bot.get_chat_member(f"@{config.CHANNEL_USERNAME}", user_id)
-        print(f"User {user_id} status: {member.status}")
-        is_subscribed = member.status in ['member', 'administrator', 'creator']
-        print(f"User {user_id} subscribed: {is_subscribed}")
-        return is_subscribed
-    except TelegramBadRequest as e:
-        print(f"TelegramBadRequest checking subscription for {user_id}: {e}")
-        # If bot is not admin in channel or channel not found, return True to not block users
-        return True
-    except Exception as e:
-        print(f"Error checking subscription for {user_id}: {e}")
-        # On error, allow access to not block legitimate users
-        return True
+    channels_to_check = [
+        config.CHANNEL_USERNAME,
+        config.CHANNEL_USERNAME_2
+    ]
+    
+    for channel in channels_to_check:
+        try:
+            print(f"Checking subscription for user {user_id} in @{channel}")
+            member = await bot.get_chat_member(f"@{channel}", user_id)
+            print(f"User {user_id} status in @{channel}: {member.status}")
+            is_subscribed = member.status in ['member', 'administrator', 'creator']
+            
+            if not is_subscribed:
+                print(f"User {user_id} is NOT subscribed to @{channel}")
+                return False
+                
+        except TelegramBadRequest as e:
+            print(f"TelegramBadRequest checking subscription for {user_id} in @{channel}: {e}")
+            # If bot is not admin in channel or channel not found, return True to not block users
+            continue
+        except Exception as e:
+            print(f"Error checking subscription for {user_id} in @{channel}: {e}")
+            # On error, allow access to not block legitimate users
+            continue
+    
+    print(f"User {user_id} is subscribed to all required channels")
+    return True
 
 async def require_subscription(callback: types.CallbackQuery):
     """Check subscription and show message if not subscribed"""
@@ -319,12 +331,20 @@ async def require_subscription(callback: types.CallbackQuery):
     
     if not is_subscribed:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="📢 Subscribe to Channel", url=config.CHANNEL_URL)],
+            [InlineKeyboardButton(text="📢 Subscribe to Snake666wrb", url=config.CHANNEL_URL)],
+            [InlineKeyboardButton(text="📢 Subscribe to shakertest", url=config.CHANNEL_URL_2)],
             [InlineKeyboardButton(text="✅ I Subscribed", callback_data="check_subscription")]
         ])
         
+        subscription_message = (
+            "📢 To use this bot, you need to subscribe to our channels:\n\n"
+            f"1. @{config.CHANNEL_USERNAME}\n"
+            f"2. @{config.CHANNEL_USERNAME_2}\n\n"
+            "After subscribing, click the button below to verify."
+        )
+        
         await callback.message.answer(
-            config.SUBSCRIPTION_REQUIRED.format(channel_url=config.CHANNEL_URL),
+            subscription_message,
             reply_markup=keyboard
         )
         return False
@@ -435,11 +455,33 @@ async def callback_check_subscription(callback: types.CallbackQuery):
             reply_markup=keyboard
         )
     else:
-        print(f"User {callback.from_user.id} not subscribed yet")
-        await callback.answer(
-            "❌ You are not subscribed yet. Please subscribe to the channel first.",
-            show_alert=True
-        )
+        print(f"User {callback.from_user.id} not subscribed to all channels yet")
+        
+        # Show which channels are missing
+        channels_to_check = [config.CHANNEL_USERNAME, config.CHANNEL_USERNAME_2]
+        missing_channels = []
+        
+        for channel in channels_to_check:
+            try:
+                member = await bot.get_chat_member(f"@{channel}", callback.from_user.id)
+                is_subscribed = member.status in ['member', 'administrator', 'creator']
+                if not is_subscribed:
+                    missing_channels.append(f"@{channel}")
+            except Exception as e:
+                print(f"Error checking channel {channel}: {e}")
+                missing_channels.append(f"@{channel}")
+        
+        if missing_channels:
+            missing_text = "\n".join(missing_channels)
+            await callback.answer(
+                f"❌ You are not subscribed to:\n{missing_text}\n\nPlease subscribe and try again.",
+                show_alert=True
+            )
+        else:
+            await callback.answer(
+                "❌ Subscription check failed. Please try again.",
+                show_alert=True
+            )
 
 @dp.callback_query(F.data == "register")
 async def callback_register(callback: types.CallbackQuery):
@@ -714,7 +756,8 @@ async def main():
         print(f"  RPC URL: {config.JSON_RPC_URL}")
         print(f"  Check subscription: {config.CHECK_SUBSCRIPTION}")
         if config.CHECK_SUBSCRIPTION:
-            print(f"  Channel: @{config.CHANNEL_USERNAME}")
+            print(f"  Channel 1: @{config.CHANNEL_USERNAME}")
+            print(f"  Channel 2: @{config.CHANNEL_USERNAME_2}")
         
         # Test bot token
         print("\n🤖 Testing bot connection...")
